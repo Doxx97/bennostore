@@ -3,28 +3,30 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Product;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\AdminNotification;
-use Carbon\Carbon; // PENTING: Untuk mengolah tanggal grafik
-use App\Models\UserNotification; // <--- Jangan lupa import ini di paling atas
-use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\OrdersExport;
+use Carbon\Carbon;
+use App\Exports\OrdersExport; // Pastikan ini ada jika pakai fitur export
+use Maatwebsite\Excel\Facades\Excel; // Pastikan ini ada
 
 class AdminController extends Controller
 {
-    // =================================================
-    // 1. DASHBOARD UTAMA (Statistik, Grafik, Tabel)
-    // =================================================
-    public function dashboard(Request $request) // <--- Tambahkan Request
+    public function dashboard(Request $request)
     {
-        // 1. STATISTIK DASAR (Tetap Sama)
-        $totalProducts = Product::count();
-        $totalOrders = Order::count();
-        $pendingOrders = Order::where('status', 'waiting_confirmation')->count();
-        $totalRevenue = Order::where('status', 'paid')->sum('total_price');
+        // === 1. DEFINISI STATUS YANG DIHITUNG SEBAGAI PENDAPATAN ===
+        // Kita hitung semua status kecuali 'pending' (belum bayar) dan 'waiting_confirmation'
+        $validStatuses = ['paid', 'shipped', 'ready_pickup', 'completed'];
 
-        // 2. LOGIKA GRAFIK DINAMIS
+        // === 2. STATISTIK DASAR (DIPERBAIKI) ===
+        $totalProducts = Product::count();
+        $totalOrders   = Order::count();
+        $pendingOrders = Order::where('status', 'waiting_confirmation')->count();
+        
+        // Perbaikan: Hitung total dari semua status valid (bukan cuma 'paid')
+        $totalRevenue  = Order::whereIn('status', $validStatuses)->sum('total_price');
+
+        // === 3. LOGIKA GRAFIK DINAMIS (DIPERBAIKI) ===
         $range = $request->input('range', '7days'); // Default 7 hari
         $chartData = [];
         $chartLabels = [];
@@ -32,11 +34,11 @@ class AdminController extends Controller
         if ($range == 'yearly') {
             // --- TAHUNAN (Jan - Des) ---
             for ($i = 1; $i <= 12; $i++) {
-                $chartLabels[] = date('M', mktime(0, 0, 0, $i, 1)); // Jan, Feb, ...
+                $chartLabels[] = date('M', mktime(0, 0, 0, $i, 1)); 
                 
                 $sum = Order::whereYear('created_at', date('Y'))
                             ->whereMonth('created_at', $i)
-                            ->where('status', 'paid')
+                            ->whereIn('status', $validStatuses) // <--- Pakai whereIn
                             ->sum('total_price');
                 $chartData[] = $sum;
             }
@@ -47,14 +49,12 @@ class AdminController extends Controller
             
             for ($i = 1; $i <= $daysInMonth; $i++) {
                 $date = Carbon::createFromDate(null, null, $i);
-                
-                // Hanya tampilkan sampai hari ini agar grafik tidak panjang kosong ke kanan
                 if ($date->gt(Carbon::now())) break; 
 
-                $chartLabels[] = $i . ' ' . $date->format('M'); // 1 Nov, 2 Nov...
+                $chartLabels[] = $i . ' ' . $date->format('M'); 
                 
                 $sum = Order::whereDate('created_at', $date->format('Y-m-d'))
-                            ->where('status', 'paid')
+                            ->whereIn('status', $validStatuses) // <--- Pakai whereIn
                             ->sum('total_price');
                 $chartData[] = $sum;
             }
@@ -66,20 +66,18 @@ class AdminController extends Controller
                 $chartLabels[] = $date->format('d M');
                 
                 $sum = Order::whereDate('created_at', $date->format('Y-m-d'))
-                            ->where('status', 'paid')
+                            ->whereIn('status', $validStatuses) // <--- Pakai whereIn
                             ->sum('total_price');
                 $chartData[] = $sum;
             }
         }
 
-        // 3. DATA LAINNYA (Tetap Sama)
+        // === 4. DATA LAINNYA ===
         $notifications = AdminNotification::orderBy('created_at', 'desc')->take(10)->get();
         $unreadCount = AdminNotification::where('is_read', false)->count();
         
-        $orders = Order::with('user')
-                    // Urutkan berdasarkan WAKTU DIBUAT (Terbaru di atas)
-                    ->orderBy('created_at', 'desc') 
-                    ->get();
+        // Urutkan pesanan dari yang terbaru
+        $orders = Order::with('user')->orderBy('created_at', 'desc')->get();
 
         $products = Product::all(); 
 
@@ -87,71 +85,62 @@ class AdminController extends Controller
             'totalProducts', 'totalOrders', 'pendingOrders', 
             'totalRevenue', 'chartLabels', 'chartData', 
             'notifications', 'unreadCount', 'orders', 'products',
-            'range' // <--- Kirim status range agar tombol bisa aktif
+            'range'
         ));
     }
 
-
-    // =================================================
-    // 2. TERIMA PEMBAYARAN (Tombol 'Terima' di Tabel)
-    // =================================================
-    public function confirmPayment($id)
-    {
-        // Cari order berdasarkan ID
-        $order = Order::findOrFail($id);
-
-        // Ubah status jadi 'paid' (Lunas)
-        $order->update(['status' => 'paid']);
-
-        // Tandai notifikasi terkait order ini jadi terbaca (Biar admin ga bingung)
-        AdminNotification::where('order_id', $id)->update(['is_read' => true]);
-
-        return redirect()->back()->with('success', 'Pembayaran berhasil dikonfirmasi! Order #' . $order->invoice_number . ' kini LUNAS.');
-    }
-
-
-    // =================================================
-    // 3. TANDAI SEMUA NOTIFIKASI DIBACA
-    // =================================================
-    public function markAsRead()
-    {
+    // Fungsi Tandai Notifikasi Dibaca
+    public function markAsRead() {
         AdminNotification::where('is_read', false)->update(['is_read' => true]);
         return redirect()->back();
-    } 
+    }
 
+    // Fungsi Konfirmasi Pembayaran
+    public function confirmPayment($id) {
+        $order = Order::findOrFail($id);
+        $order->update(['status' => 'paid']);
+        
+        // Kirim notifikasi ke User
+        \App\Models\UserNotification::create([
+            'user_id' => $order->user_id,
+            'order_id' => $order->id,
+            'title' => 'Pembayaran Diterima ✅',
+            'message' => 'Pesanan #' . $order->invoice_number . ' sedang diproses penjual.',
+            'is_read' => false
+        ]);
 
-    public function markAsShipped($id) 
-    {
+        return redirect()->back()->with('success', 'Pembayaran diterima.');
+    }
+
+    // Fungsi Kirim Barang / Siap Pickup
+    public function markAsShipped($id) {
         $order = Order::findOrFail($id);
 
         if ($order->delivery_method == 'delivery') {
             $order->update(['status' => 'shipped']); 
-            
-            // 2. KIRIM NOTIFIKASI KE USER (TITIK MERAH NYALA)
-            \App\Models\UserNotification::create([
-                'user_id' => $order->user_id,
-                'order_id' => $order->id,
-                'title' => '📦 Pesanan Sedang Diantar',
-                'message' => 'Pesanan #' . $order->invoice_number . ' sedang dibawa kurir.',
-                'is_read' => false // Penting!
-            ]);
+            $title = '📦 Pesanan Sedang Diantar';
+            $msg = 'Pesanan #' . $order->invoice_number . ' sedang dibawa kurir.';
         } else {
             $order->update(['status' => 'ready_pickup']); 
-            
-            // 2. KIRIM NOTIFIKASI KE USER
-            \App\Models\UserNotification::create([
-                'user_id' => $order->user_id,
-                'order_id' => $order->id,
-                'title' => '🛍️ Barang Siap Diambil',
-                'message' => 'Pesanan #' . $order->invoice_number . ' sudah siap di toko.',
-                'is_read' => false // Penting!
-            ]);
+            $title = '🛍️ Barang Siap Diambil';
+            $msg = 'Pesanan #' . $order->invoice_number . ' sudah siap di toko.';
         }
-        return redirect()->back()->with('success', 'Status diupdate & Notifikasi dikirim.');
+
+        // Notif User
+        \App\Models\UserNotification::create([
+            'user_id' => $order->user_id,
+            'order_id' => $order->id,
+            'title' => $title,
+            'message' => $msg,
+            'is_read' => false
+        ]);
+
+        return redirect()->back()->with('success', 'Status pesanan diperbarui.');
     }
+
+    // Fungsi Export Excel
     public function exportOrders()
     {
-        // Nama file saat didownload
         return Excel::download(new OrdersExport, 'laporan-penjualan-'.date('d-m-Y').'.xlsx');
     }
 }
