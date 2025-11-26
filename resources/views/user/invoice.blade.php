@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Struk #{{ $order->invoice_number }}</title>
+    <link rel="icon" href="{{ asset('images/2.png') }}" type="image/png">
     <style>
         body {
             font-family: 'Courier New', Courier, monospace; /* Font ala struk */

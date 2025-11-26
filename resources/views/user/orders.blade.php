@@ -65,14 +65,24 @@
                                 @endif
                             </td>
                             <td class="text-end pe-4">
-                                
-                                @if($order->status == 'paid' || $order->status == 'shipped' || $order->status == 'completed' || $order->status == 'ready_pickup')
-                                    <a href="{{ route('order.print', $order->id) }}" target="_blank" class="btn btn-outline-secondary btn-sm mb-1" title="Cetak Struk">
-                                        <i class="bi bi-printer"></i>
-                                    </a>
-                                @endif
+    
+                                <a href="{{ route('order.print', $order->id) }}" target="_blank" class="btn btn-outline-secondary btn-sm mb-1" title="Cetak Struk">
+                                    <i class="bi bi-printer"></i>
+                                </a>
 
                                 @if($order->status == 'shipped' || $order->status == 'ready_pickup')
+                                    
+                                    <form action="{{ route('order.complete', $order->id) }}" method="POST" class="d-inline complete-form">
+                                        @csrf
+                                        <button type="button" class="btn btn-success btn-sm fw-bold text-white mb-1" onclick="confirmReceived(this)">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Pesanan Diterima
+                                        </button>
+                                    </form>
+
+                                @elseif($order->status == 'completed')
+                                    <div class="badge bg-success mt-1">
+                                        <i class="bi bi-star-fill"></i> Transaksi Selesai
+                                    </div>
                                 @endif
 
                             </td>
@@ -92,4 +102,24 @@
         </div>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    function confirmReceived(button) {
+        Swal.fire({
+            title: 'Sudah Terima Barang?',
+            text: "Pastikan barang sudah Anda terima dengan baik. Transaksi akan diselesaikan.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#198754', // Hijau
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Sudah Terima',
+            cancelButtonText: 'Belum'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                button.closest('.complete-form').submit();
+            }
+        });
+    }
+</script>
 @endsection

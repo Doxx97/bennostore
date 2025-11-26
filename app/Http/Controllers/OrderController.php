@@ -13,18 +13,29 @@ class OrderController extends Controller
         return view('user.orders', compact('orders'));
     }
 
-    public function markAsCompleted($id) {
-        $order = Order::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
-        $order->update(['status' => 'completed']);
-        
-        // Info balik ke Admin
-        AdminNotification::create([
-            'type' => 'order_completed',
-            'message' => 'Pesanan #' . $order->invoice_number . ' telah diterima customer.',
-            'order_id' => $order->id,
-            'is_read' => false
-        ]);
-        return redirect()->back()->with('success', 'Pesanan selesai.');
+    public function markAsCompleted($id)
+    {
+        // 1. Cari order milik user yang sedang login
+        $order = Order::where('user_id', \Illuminate\Support\Facades\Auth::id())->findOrFail($id);
+
+        // 2. Validasi: Hanya bisa selesai jika statusnya 'shipped' (Diantar) atau 'ready_pickup' (Siap Diambil)
+        if ($order->status == 'shipped' || $order->status == 'ready_pickup') {
+            
+            // 3. Update Status jadi Selesai
+            $order->update(['status' => 'completed']);
+
+            // 4. Kirim Notifikasi ke Admin (Bahwa transaksi beres)
+            \App\Models\AdminNotification::create([
+                'type' => 'order_completed',
+                'message' => '✅ Pesanan #' . $order->invoice_number . ' telah diterima oleh pembeli.',
+                'order_id' => $order->id,
+                'is_read' => false
+            ]);
+
+            return redirect()->back()->with('success', 'Terima kasih! Transaksi telah selesai.');
+        }
+
+        return redirect()->back()->with('error', 'Pesanan belum dapat diselesaikan.');
     }
 
     // 3. MATIKAN TITIK MERAH

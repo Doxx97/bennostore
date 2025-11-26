@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController; 
@@ -9,11 +10,10 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminProductController;
 use App\Http\Controllers\OrderController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
+Route::get('/storage-link', function () {
+    Artisan::call('storage:link');
+    return 'Storage linked successfully!';
+});
 
 // === 1. HALAMAN DEPAN ===
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -74,4 +74,5 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('products', AdminProductController::class);
     // Export to excell
     Route::get('/orders/export', [AdminController::class, 'exportOrders'])->name('orders.export'); 
+    Route::post('/order/{id}/complete', [OrderController::class, 'markAsCompleted'])->name('order.complete');
 });

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Benno Store</title>
-    
+    <link rel="icon" href="{{ asset('images/2.png') }}" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -176,7 +176,7 @@
         <div class="container">
             
             <a class="navbar-brand d-flex align-items-center" href="{{ route('home') }}">
-                <i class="bi bi-bag-heart-fill me-2 text-info"></i> 
+                <img src="{{ asset('images/2.png') }}" alt="Logo" width="40" height="40" class="d-inline-block align-text-top" style="padding-right: px">
                 BENNO STORE
             </a>
 
@@ -303,7 +303,7 @@
         <div class="container">
             <div class="row gy-4">
                 <div class="col-lg-4 col-md-6">
-                    <h5 class="text-white fw-bold mb-3"><i class="bi bi-bag-heart-fill me-2 text-info"></i> Benno Store</h5>
+                    <h5 class="text-white fw-bold mb-3"><img src="{{ asset('images/2.png') }}" alt="Logo Benno Store" style="width: 30px; height: auto; margin-bottom: 5px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2));"></img> Benno Store</h5>
                     <p class="small opacity-75">Tempat belanja kebutuhan harian paling lengkap, murah, dan terpercaya. Melayani dengan sepenuh hati.</p>
                 </div>
                 <div class="col-lg-2 col-md-6">
@@ -317,7 +317,7 @@
                 <div class="col-lg-3 col-md-6">
                     <h6 class="text-white fw-bold mb-3">Hubungi Kami</h6>
                     <ul class="list-unstyled small opacity-75">
-                        <li class="mb-2"><i class="bi bi-whatsapp me-2"></i> 0812-3456-7890</li>
+                        <li class="mb-2"><i class="bi bi-whatsapp me-2"></i> 0851-4101-0721</li>
                         <li class="mb-2"><i class="bi bi-envelope me-2"></i> cs@bennostore.com</li>
                         <li class="mb-2"><i class="bi bi-geo-alt me-2"></i> RT 31 RW 11 Desa Gembleb Kecamatan Pogalan Kabupaten Trenggalek, Indonesia 66371</li>
                     </ul>
