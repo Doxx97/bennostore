@@ -14,11 +14,11 @@ class HomeController extends Controller
             ['name' => 'Pulsa & Kuota', 'icon' => 'bi-phone'],
             ['name' => 'Token Listrik', 'icon' => 'bi-lightning-charge-fill'],
             ['name' => 'Makanan', 'icon' => 'bi-egg-fried'],
-            ['name' => 'Dapur', 'icon' => 'bi-fire'],
-            ['name' => 'Ibu & Anak', 'icon' => 'bi-people-fill'],
-            ['name' => 'Kebersihan', 'icon' => 'bi-stars'],
+            ['name' => 'Barang Dapur', 'icon' => 'bi-fire'],
+            ['name' => 'Keperluan Ibu & Anak', 'icon' => 'bi-people-fill'],
+            ['name' => 'Barang Kebersihan', 'icon' => 'bi-stars'],
             ['name' => 'Kesehatan', 'icon' => 'bi-heart-pulse-fill'],
-            ['name' => 'Rumah', 'icon' => 'bi-house-door-fill'],
+            ['name' => 'Alat Rumah', 'icon' => 'bi-house-door-fill'],
             ['name' => 'Top Up', 'icon' => 'bi-wallet2'],
             ['name' => 'Lain-lain', 'icon' => 'bi-grid-fill']
         ];
@@ -53,9 +53,6 @@ class HomeController extends Controller
             // Ambil produk per kategori utama untuk ditampilkan di section masing-masing
             $sembakoProducts = Product::where('category', 'Sembako')->latest()->get();
             $barangProducts = Product::where('category', 'Barang')->latest()->get();
-            
-            // Ambil juga $products (Semua Produk) sebagai cadangan/rekomendasi umum
-            // Ini untuk memperbaiki Error "Undefined variable $products" yang Anda alami
             $products = Product::inRandomOrder()->limit(12)->get();
         }
 
@@ -67,7 +64,7 @@ class HomeController extends Controller
             'categoryName', 
             'sembakoProducts', 
             'barangProducts',
-            'products' // <--- Penting: Kirim ini agar tidak error di view loop rekomendasi
+            'products'
         ));
     }
 }

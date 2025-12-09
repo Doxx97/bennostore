@@ -22,6 +22,7 @@ class Order extends Model
         'status',           // pending, paid, shipped, dll
         'invoice_number',   // INV-XXXXX
         'delivery_method',  // pickup atau delivery
+        'payment_proof',
     ];
 
     /**

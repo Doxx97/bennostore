@@ -326,6 +326,7 @@
             });
         }
 
+        /* --- BAGIAN ALERT BAWAAN (TOAST) --- */
         @if(session('success'))
             const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
             Toast.fire({ icon: 'success', title: '{{ session('success') }}' });
@@ -333,6 +334,30 @@
         @if(session('error'))
             const ToastError = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
             ToastError.fire({ icon: 'error', title: '{{ session('error') }}' });
+        @endif
+
+        /* --- BAGIAN TAMBAHAN BARU: ALERT MODAL (POP-UP OK) --- */
+        
+        // 1. Muncul ketika berhasil upload bukti bayar
+        @if(session('alert_success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: '{{ session('alert_success') }}',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#234C6A'
+            });
+        @endif
+
+        // 2. Muncul ketika waktu habis (Timeout)
+        @if(session('alert_timeout'))
+            Swal.fire({
+                icon: 'warning',
+                title: 'Waktu Habis',
+                text: '{{ session('alert_timeout') }}',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#dc3545'
+            });
         @endif
     </script>
 </body>

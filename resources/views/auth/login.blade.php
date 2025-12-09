@@ -173,7 +173,7 @@
                         <input type="checkbox" class="form-check-input" id="remember">
                         <label class="form-check-label text-muted" for="remember">Ingat Saya</label>
                     </div>
-                    <a href="#" class="text-decoration-none text-warna">Lupa Password?</a>
+                    <a href="{{ route('password.request') }}" class="text-decoration-none text-warna">Lupa Password?</a>
                 </div>
 
                 <button type="submit" class="btn btn-custom mb-3">MASUK</button>
